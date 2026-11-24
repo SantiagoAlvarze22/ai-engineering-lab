@@ -2,3 +2,5 @@ google-genai
 groq
 python-dotenv
 pytest
+sentence-transformers 
+chromadb
