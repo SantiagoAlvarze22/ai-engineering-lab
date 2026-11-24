@@ -15,6 +15,6 @@ Thumbs.db
 .env
 config.json
 
-# 
+# Virtual environment
 .venv/
 venv/
