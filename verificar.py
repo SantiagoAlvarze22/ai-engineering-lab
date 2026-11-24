@@ -3,6 +3,7 @@ from dotenv import load_dotenv
 from google import genai
 from google.genai import errors
 from groq import Groq
+import time
 
 load_dotenv(override=True)  # override=True: siempre manda lo que dice el .env
 
@@ -26,12 +27,16 @@ print("Modelo en .env:", os.environ["GEMINI_MODEL"])
 print("Lista a probar:", modelos_gemini)
 print("-" * 40)
 
+
 # ---------- Gemini con respaldo ----------
 respuesta_gemini = None
+timeTotalGemini = None
 for modelo in modelos_gemini:
     try:
+        startGemini = time.perf_counter()
         g = gemini.models.generate_content(model=modelo, contents=pregunta)
         respuesta_gemini = f"Gemini ({modelo}): {g.text.strip()}"
+        timeTotalGemini = time.perf_counter() - startGemini
         break
     except errors.ServerError as e:
         print(f"  {modelo} no disponible ({e.code}), probando el siguiente...")
@@ -43,9 +48,23 @@ for modelo in modelos_gemini:
 
 print(respuesta_gemini or "Gemini: ningún modelo respondió, intenta más tarde")
 
+
+startGroq = time.perf_counter()
 # ---------- Groq ----------
 r = groq.chat.completions.create(
     model=os.environ["GROQ_MODEL"],
     messages=[{"role": "user", "content": pregunta}],
 )
+timeTotalGroq = time.perf_counter() - startGroq
 print(f"Groq ({os.environ['GROQ_MODEL']}): {r.choices[0].message.content.strip()}")
+
+
+# The fastest model
+
+
+if timeTotalGemini is None:
+    print(f"Only Groq answered: {timeTotalGroq:.2f} s")
+elif timeTotalGemini > timeTotalGroq:
+    print(f"Gemini takes longer : {timeTotalGemini:.2f} s vs Groq: {timeTotalGroq:.2f} s")
+else:
+    print(f"Groq takes longer: {timeTotalGroq:.2f} s vs Gemini: {timeTotalGemini:.2f} s")
